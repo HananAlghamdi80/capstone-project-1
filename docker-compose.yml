@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5001:5001"  # Expose the port as specified in the Flask app
+    environment:
+      REDIS_HOST: redis
+      DB_HOST: db         # Database host, matches the service name for MySQL
+      DB_USER: user       # Database user for MySQL
+      DB_PASSWORD: password  # Database password for MySQL
+      DB_NAME: mydatabase    # Database name for MySQL
+    depends_on:
+      db:
+        condition: service_healthy  # Ensures db is ready before starting web
+      redis:
+        condition: service_started  # Ensures redis is started before web
+    command: >
+      sh -c "sleep 15 && python app.py"  # Adjust delay to give Redis and MySQL more time
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: "mysql:8.0"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: mydatabase   # This should match `DB_NAME` in Flask
+      MYSQL_USER: user             # Custom user to match `DB_USER` in Flask
+      MYSQL_PASSWORD: password     # Custom password to match `DB_PASSWORD` in Flask
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      retries: 5
+      interval: 10s
+      timeout: 10s
+
+volumes:
+  db_data:
