@@ -3,11 +3,11 @@ name: Deploy Docker Image
 on:
   push:
     branches:
-      - main  # Trigger on push to the main branch
+      - main
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # You can also specify a self-hosted runner if preferred
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         server: 
@@ -21,22 +21,25 @@ jobs:
       - name: Pull Docker Image
         run: |
           echo "Pulling the Docker image from Docker Hub..."
-          docker pull hanangh/capstone-project:latest  # Update with your Docker Hub details
+          docker pull hanangh/capstone-project:latest
 
       - name: SSH to Server and Deploy
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH key stored in GitHub secrets
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           # Start the SSH agent and add the SSH key
-          eval "$(ssh-agent -s)"  # Start the ssh-agent
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -  # Add the private key to the agent
-          
+          eval "$(ssh-agent -s)"
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - || { echo "Failed to add SSH key"; exit 1; }
+
+          # Verify the SSH agent has the key
+          ssh-add -l  # This will list the keys if added correctly
+
           # SSH into the server and run deployment commands
           ssh -o StrictHostKeyChecking=no ${{ matrix.server.username }}@${{ matrix.server.ip }} << 'EOF'
             echo "Deploying the Docker container on ${{ matrix.server.name }}..."
-            docker stop myapp-container || true  # Stop the existing container if it exists
-            docker rm myapp-container || true  # Remove the existing container if it exists
-            docker run -d --name myapp-container -p 80:80 hanangh/capstone-project:latest  # Update with your Docker Hub details
+            docker stop myapp-container || true
+            docker rm myapp-container || true
+            docker run -d --name myapp-container -p 80:80 hanangh/capstone-project:latest
           EOF
 
 
