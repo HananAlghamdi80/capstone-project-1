@@ -17,6 +17,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2  # Checkout the code from the repository
 
+      - name: Set up .pem key
+        # Decode the PEM key from the GitHub secret and save it as a file
+        run: |
+          echo "${{ secrets.PEM_KEY_BASE64 }}" | base64 -d > ~/deploy_key.pem
+          chmod 600 ~/deploy_key.pem
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
@@ -29,5 +35,8 @@ jobs:
 
       - name: Deploy to Server
         run: |
-          scp -i ~/capstone-project-Hanan/pem.pem -o StrictHostKeyChecking=no docker-compose.yml ec2-user@${{ matrix.server_ip }}:/home/ec2-user/  # Copy docker-compose to the server
-          ssh -i ~/capstone-project-Hanan/pem.pem -o StrictHostKeyChecking=no ec2-user@${{ matrix.server_ip }} "docker-compose up -d"  # Run Docker Compose on the server
+          scp -i ~/deploy_key.pem -o StrictHostKeyChecking=no ./CAPSTONE-PROJECT-1/docker-compose.yml ec2-user@${{ matrix.server_ip }}:/home/ec2-user/  # Copy docker-compose to the server
+          ssh -i ~/deploy_key.pem -o StrictHostKeyChecking=no ec2-user@${{ matrix.server_ip }} "docker-compose up -d"  # Run Docker Compose on the server
+
+      - name: Clean up PEM file
+        run: rm ~/deploy_key.pem
