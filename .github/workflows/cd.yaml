@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         server: 
-          - { name: "Production Server", ip: "54.162.59.154", username: "root" }
-          - { name: "Staging Server", ip: "54.210.13.167", username: "root" }
+          - { name: "Production Server", ip: "54.162.59.154", username: "ec2-user" }
+          - { name: "Staging Server", ip: "54.210.13.167", username: "ec2-user" }
 
     steps:
       - name: Checkout Code
@@ -41,6 +41,7 @@ jobs:
             docker rm myapp-container || true
             docker run -d --name myapp-container -p 80:80 hanangh/capstone-project:latest
           EOF
+
 
 
 
