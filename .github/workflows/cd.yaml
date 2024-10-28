@@ -38,11 +38,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ matrix.server.username }}@${{ matrix.server.ip }} << 'EOF'
             echo "Deploying the Docker container on ${{ matrix.server.name }}..."
             docker stop myapp-container || true  # Stop the existing container if it exists
-            docker rm myapp-container || true    # Remove the existing container if it exists
-            docker run -d --name myapp-container -p 80:80 hanangh/capstone-project:latest  # Start the new container
+            docker rm -f myapp-container || true  # Remove the existing container if it exists
+            docker run -d --name myapp-container -p 8081:80 hanangh/capstone-project:latest  # Run the container on unique port 8081
           EOF
-
-
 
 
 
