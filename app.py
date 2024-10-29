@@ -75,13 +75,4 @@ if __name__ == '__main__':
     init_db()  # Make sure table exists
     app.run(host='0.0.0.0', port=5001, debug=True)
 
-    #test1
-    #test3
-    #test4
-    #test5
-    #test6
-    #test7
-    #test8
-    #test9
-    #test10
-    #test11
+   
