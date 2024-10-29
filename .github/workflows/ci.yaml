@@ -1,55 +1,63 @@
 name: CI/CD Pipeline
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
-      - main
+      - main  # Run dependency test only on pull requests to main branch
+  push:
+    branches:
+      - main  # Run full pipeline on push to main branch
 
 jobs:
-  test:
+  # Job for Testing Dependencies and Running Unit Tests on Pull Request and Push
+  dependency-test:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Pull the latest code from the GitHub repository
+
+    - name: Set up Python
+      uses: actions/setup-python@v2  # Set up the Python environment
+      with:
+        python-version: '3.10'  # Specify the Python version
 
     - name: Install Dependencies
       run: |
-        # Example command to install dependencies
-        sudo apt-get update
-        sudo apt-get install -y curl git build-essential
+        python -m pip install --upgrade pip  # Upgrade pip to the latest version
+        pip install -r requirements.txt  # Install all dependencies from requirements.txt
 
-    - name: Run Tests
+    - name: Verify Dependencies
       run: |
-        # Example command to run tests
-        # Replace this with actual commands to run your project’s tests
-        echo "Running tests..."
-        # Example: npm test, pytest, etc.
-        exit 0
+        python -c "import flask, redis, mysql.connector"  # Import required libraries to check for installation
+        echo "Dependencies installed correctly!"  # Print confirmation if dependencies are correctly installed
 
+    - name: Run Unit Tests
+      run: |
+        python test_app.py  # Run the unit test to verify the Flask application is working correctly
+
+  # Job for Building and Pushing to Docker Hub (only on push to main)
   build-and-push:
     runs-on: ubuntu-latest
-    needs: test  # Ensure the 'test' job completes successfully first
+    needs: dependency-test  # Ensure dependency-test completes successfully first
+    if: github.event_name == 'push'  # Only run this job on pushes to main
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Pull the latest code from the GitHub repository
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v2  # Set up Docker Buildx for building images
 
     - name: Log in to Docker Hub
-      uses: docker/login-action@v2
+      uses: docker/login-action@v2  # Log in to Docker Hub
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        username: ${{ secrets.DOCKER_USERNAME }}  # Docker Hub username from GitHub secrets for security
+        password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub password from GitHub secrets for security
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v2  # Use Docker’s build-push action to build and push the Docker image
       with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/capstone-project:latest
+        context: .  # Set build context to the root directory of the repository
+        push: true  # Enable pushing the built image to Docker Hub
+        tags: ${{ secrets.DOCKER_USERNAME }}/capstone-project:latest  # Tag the Docker image as 'latest' for easy versioning
