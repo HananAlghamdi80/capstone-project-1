@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         server: 
-          - { name: "Production Server", ip: "54.162.59.154", username: "ec2-user" }
-          - { name: "Staging Server", ip: "54.210.13.167", username: "ec2-user" }
+          - { name: "deploy", ip: "54.162.59.154", username: "ec2-user" }
+          - { name: "deploy", ip: "54.210.13.167", username: "ec2-user" }
 
     steps:
       - name: Checkout Code
