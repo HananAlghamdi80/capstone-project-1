@@ -10,7 +10,7 @@ on:
 
 jobs:
   # Job for Testing Dependencies and Running Unit Tests on Pull Request and Push
-  dependency-test:
+  test:
     runs-on: ubuntu-latest
 
     steps:
