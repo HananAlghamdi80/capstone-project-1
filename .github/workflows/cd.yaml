@@ -1,219 +1,52 @@
-name: Deploy Docker Image
+name: Deploy Docker Image via Bastion Server
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger this workflow on pushes to the main branch.
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner for this job.
     strategy:
       matrix:
         server: 
-          - { name: "deploy", ip: "54.162.59.154", username: "ec2-user" }
-          - { name: "deploy", ip: "54.210.13.167", username: "ec2-user" }
+          - { name: deploy, ip: "10.0.2.126", username: "root" }
+          - { name: deploy, ip: "10.0.2.127", username: "root" }
+        # Define a matrix for deploying to multiple servers with their IPs and usernames.
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2  # Check out the code from the repository.
 
-      - name: Pull Docker Image
-        run: |
-          echo "Pulling the Docker image from Docker Hub..."
-          docker pull hanangh/capstone-project:latest
-
-      - name: SSH to Server and Deploy
+      - name: Set up SSH Agent and Bastion Key
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          BASTION_SSH_PRIVATE_KEY: ${{ secrets.BASTION_SSH_PRIVATE_KEY }}
         run: |
-          # Start the SSH agent and add the SSH key
+          # Start the SSH agent and add the bastion server private key
           eval "$(ssh-agent -s)"
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - || { echo "Failed to add SSH key"; exit 1; }
-
-          # Verify the SSH agent has the key
-          ssh-add -l  # This will list the keys if added correctly
-
-          # SSH into the server and run deployment commands
-          ssh -o StrictHostKeyChecking=no ${{ matrix.server.username }}@${{ matrix.server.ip }} << 'EOF'
-            echo "Deploying the Docker container on ${{ matrix.server.name }}..."
-            docker stop myapp-container || true  # Stop the existing container if it exists
-            docker rm -f myapp-container || true  # Remove the existing container if it exists
-            docker run -d --name myapp-container -p 8081:80 hanangh/capstone-project:latest  # Run the container on unique port 8081
-          EOF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# name: Deploy Docker Image
-
-# on:
-#   push:
-#     branches:
-#       - main  # Trigger on push to the main branch
-
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest  # You can also specify a self-hosted runner if preferred
-#     strategy:
-#       matrix:
-#         server: 
-#           - { name: "Production Server", ip: "54.162.59.154", username: "root" }
-#           - { name: "Staging Server", ip: "54.210.13.167", username: "root" }
-
-#     steps:
-#       - name: Checkout Code
-#         uses: actions/checkout@v2
-
-#       - name: Pull Docker Image
-#         run: |
-#           echo "Pulling the Docker image from Docker Hub..."
-#           docker pull hanangh/capstone-project:latest  # Update with your Docker Hub details
-
-#       - name: SSH to Server and Deploy
-#         env:
-#           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # SSH key stored in GitHub secrets
-#         run: |
-#           # Add the SSH key to the SSH agent
-#           echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-#           # SSH into the server and run deployment commands
-#           ssh -o StrictHostKeyChecking=no ${{ matrix.server.username }}@${{ matrix.server.ip }} << 'EOF'
-#             echo "Deploying the Docker container on ${{ matrix.server.name }}..."
-#             docker stop myapp-container || true  # Stop the existing container if it exists
-#             docker rm myapp-container || true  # Remove the existing container if it exists
-#             docker run -d --name myapp-container -p 80:80 hanangh/capstone-project:latest  # Update with your Docker Hub details
-#           EOF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # name: Deploy Docker Image
-
-# # on:
-# #   push:
-# #     branches:
-# #       - main  # This workflow will trigger on push to the main branch
-
-# # jobs:
-# #   deploy:
-# #     runs-on: ubuntu-latest  # Use a GitHub-hosted runner
-# #     steps:
-# #       - name: Checkout Code
-# #         uses: actions/checkout@v2
-
-# #       - name: Pull Docker Image
-# #         run: |
-# #           echo "Pulling the Docker image from Docker Hub..."
-# #           docker pull your-dockerhub-username/your-image-name:latest
-
-# #       - name: SSH to Server and Deploy
-# #         env:
-# #           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Add your SSH key in GitHub secrets
-# #           USERNAME: your-username  # Replace with your server username
-# #           SERVER_IP: your-server-ip  # Replace with your server's IP address
-# #         run: |
-# #           # Add the SSH key to the SSH agent
-# #           echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-# #           # SSH into the server and run deployment commands
-# #           ssh -o StrictHostKeyChecking=no $USERNAME@$SERVER_IP << 'EOF'
-# #             echo "Deploying the Docker container..."
-# #             docker stop your-container-name || true  # Stop the existing container if it exists
-# #             docker rm your-container-name || true  # Remove the existing container if it exists
-# #             docker run -d --name your-container-name -p 80:80 your-dockerhub-username/your-image-name:latest  # Run the new container
-# #           EOF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # # name: Continuous Deployment
-
-# # # on:
-# # #   push:
-# # #     branches:
-# # #       - main  # This workflow runs on every push to the main branch
-
-# # # jobs:
-# # #   deploy:
-# # #     runs-on: ubuntu-latest
-
-# # #     strategy:
-# # #       matrix:
-# # #         server_ip: [54.210.13.167, 54.162.59.154]  # Replace with your actual server IPs
-
-# # #     steps:
-# # #       - name: Checkout code
-# # #         uses: actions/checkout@v2  # Checkout the code from the repository
-
-# # #       - name: Set up .pem key
-# # #         # Decode the PEM key from the GitHub secret and save it as a file
-# # #         run: |
-# # #           echo "${{ secrets.PEM_KEY_BASE64 }}" | base64 -d > ~/deploy_key.pem
-# # #           chmod 600 ~/deploy_key.pem
-
-# # #       - name: Log in to Docker Hub
-# # #         uses: docker/login-action@v2
-# # #         with:
-# # #           username: ${{ secrets.DOCKER_USERNAME }}  # Docker Hub username
-# # #           password: ${{ secrets.DOCKER_PASSWORD }}  # Docker Hub password
-
-# # #       - name: Pull Docker image
-# # #         run: |
-# # #           docker pull ${{ secrets.DOCKER_USERNAME }}/capstone-project:latest  # Pull the Docker image
-
-# # #       - name: Deploy to Server
-# # #         run: |
-# # #           scp -i ~/deploy_key.pem -o StrictHostKeyChecking=no ./CAPSTONE-PROJECT-1/docker-compose.yml ec2-user@${{ matrix.server_ip }}:/home/ec2-user/  # Copy docker-compose to the server
-# # #           ssh -i ~/deploy_key.pem -o StrictHostKeyChecking=no ec2-user@${{ matrix.server_ip }} "docker-compose up -d"  # Run Docker Compose on the server
-
-# # #       - name: Clean up PEM file
-# # #         run: rm ~/deploy_key.pem
+          echo "$BASTION_SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - || { echo "Failed to add SSH key"; exit 1; }
+          ssh-add -l  # Verify that the SSH key has been added successfully
+
+      - name: SSH to Bastion Server and Deploy to Internal Server
+        env:
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+        run: |
+          # Connect to the bastion server using SSH as root
+          ssh -o StrictHostKeyChecking=no root@8.213.17.120 << 'EOF'
+            
+            # Save the internal server SSH private key on the bastion server to access internal servers
+            echo "$SERVER_SSH_PRIVATE_KEY" > ~/.ssh/server_key
+            chmod 600 ~/.ssh/server_key  # Set correct permissions for the key
+
+            # Deploy to the specified internal server from the matrix
+            ssh -i ~/.ssh/server_key -o StrictHostKeyChecking=no root@${{ matrix.server.ip }} << 'INTERNAL_COMMANDS'
+              # Pull the Docker image and deploy it on the internal server
+              echo "Pulling Docker image and deploying on internal server ${{ matrix.server.ip }}..."
+              docker pull hanangh/capstone-project:latest  # Pull the latest Docker image
+              docker stop myapp-container || true  # Stop any existing container with the same name, if it exists
+              docker rm -f myapp-container || true  # Remove any existing container with the same name, if it exists
+              docker run -d --name myapp-container -p 8081:80 hanangh/capstone-project:latest  # Start a new container with a unique port
+            INTERNAL_COMMANDS
+
+          EOF  # End of SSH commands on the bastion server
