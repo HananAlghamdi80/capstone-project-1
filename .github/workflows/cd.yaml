@@ -1,43 +1,36 @@
-name: Deploy Docker Image to HTTP Servers
+name: Deploy to HTTP Servers
 
 on:
   push:
     branches:
-      - main  # Trigger the workflow on push to the main branch
+      - main
 
 jobs:
   deploy:
     runs-on: self-hosted
     strategy:
       matrix:
-        nodes: ["10.0.2.168", "10.0.2.167"]  # IP addresses of HTTP servers for deployment
+        server: 
+            - { name: "deploy", ip: "10.0.2.126", user: "root" }
+            - { name: "deploy", ip: "10.0.2.127", user: "root" }
 
     steps:
-      - name: Set up SSH key for connecting to the servers
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.BASTION_SSH_PRIVATE_KEY }}  # Using the private SSH key for the bastion server
-          SSH_USERNAME: root  # Using 'root' as the SSH username
-        run: |
-          # Save the SSH key to a file named "hananKey" and set appropriate permissions
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/hananKey
-          chmod 600 ~/.ssh/hananKey
-          
-          # Define the target node as an environment variable to avoid bad substitution errors
-          TARGET_NODE=${{ matrix.nodes }}
-          
-          # Connect to the server through the bastion and execute Docker commands
-          ssh -i ~/.ssh/hananKey -o StrictHostKeyChecking=no -J root@8.213.17.120 root@$TARGET_NODE << 'EOF'
-            echo "Pulling Docker image from Docker Hub and running it on server $TARGET_NODE"
-            
-            # Pull the latest version of the Docker image from Docker Hub
-            docker pull hanangh/capstone-project:latest  
-            
-            # Stop any existing container named "myapp-container" if it exists
-            docker stop myapp-container || true  
-            
-            # Remove any existing container with the same name to avoid conflicts
-            docker rm -f myapp-container || true  
-            
-            # Run a new container with the specified name and port mapping
-            docker run -d --name myapp-container -p 8081:80 hanangh/capstone-project:latest  
-          EOF
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Pull Docker image
+      run: docker pull hanangh/capstone-project:latest
+    
+    - name: Copy SSH key file
+      env: 
+        SSH_KEY: ${{ secrets.BASTION_SSH_PRIVATE_KEY }}
+      run: | 
+        echo "$SSH_KEY" > hananKey
+        chmod 600 hananKey
+
+    - name: Deploy Docker container
+      run: |
+        ssh -i hananKey root@${{ matrix.server.ip }} 'cd /capstone-project && docker stop app && docker rm app && docker pull hanangh/capstone-project:latest && docker run -d --name app -p 8081:80 --env-file .env hanangh/capstone-project:latest'
