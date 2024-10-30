@@ -11,8 +11,8 @@ jobs:
     strategy:
       matrix:
         server: 
-            - {  ip: "10.0.2.126", user: "root" }
-            - {  ip: "10.0.2.127", user: "root" }
+            - {  ip: "10.0.2.126"}
+            - {  ip: "10.0.2.127"}
 
     steps:
     - name: Checkout code
