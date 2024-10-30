@@ -21,10 +21,13 @@ jobs:
           # Save the SSH key to a file named "hananKey" and set appropriate permissions
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/hananKey
           chmod 600 ~/.ssh/hananKey
-
-          # Connect to the server through the bastion server and execute Docker commands
-          ssh -i ~/.ssh/hananKey -o StrictHostKeyChecking=no -J root@8.213.17.120 root@${{ matrix.nodes }} << EOF
-            echo "Pulling Docker image from Docker Hub and running it on server ${matrix.nodes}"
+          
+          # Define the target node as an environment variable to avoid bad substitution errors
+          TARGET_NODE=${{ matrix.nodes }}
+          
+          # Connect to the server through the bastion and execute Docker commands
+          ssh -i ~/.ssh/hananKey -o StrictHostKeyChecking=no -J root@8.213.17.120 root@$TARGET_NODE << 'EOF'
+            echo "Pulling Docker image from Docker Hub and running it on server $TARGET_NODE"
             
             # Pull the latest version of the Docker image from Docker Hub
             docker pull hanangh/capstone-project:latest  
