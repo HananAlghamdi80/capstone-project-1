@@ -18,15 +18,23 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.BASTION_SSH_PRIVATE_KEY }}  # Using the private SSH key for the bastion server
           SSH_USERNAME: root  # Using 'root' as the SSH username
         run: |
-          # Configure SSH key for access with the correct name "hananKey"
+          # Save the SSH key to a file named "hananKey" and set appropriate permissions
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/hananKey
           chmod 600 ~/.ssh/hananKey
 
-          # Connect to the server through the bastion and deploy the Docker image
-          ssh -i ~/.ssh/hananKey -o StrictHostKeyChecking=no -J root@8.213.17.120 root@${{ matrix.nodes }} << 'EOF'
-            echo "Pulling Docker image from Docker Hub and running it on server ${{ matrix.nodes }}"
-            docker pull hanangh/capstone-project:latest  # Pull the latest version of the Docker image
-            docker stop myapp-container || true  # Stop any existing container with the same name, if it exists
-            docker rm -f myapp-container || true  # Remove the existing container with the same name, if it exists
-            docker run -d --name myapp-container -p 8081:80 hanangh/capstone-project:latest  # Run a new container on port 8081
+          # Connect to the server through the bastion server and execute Docker commands
+          ssh -i ~/.ssh/hananKey -o StrictHostKeyChecking=no -J root@8.213.17.120 root@${{ matrix.nodes }} << EOF
+            echo "Pulling Docker image from Docker Hub and running it on server ${matrix.nodes}"
+            
+            # Pull the latest version of the Docker image from Docker Hub
+            docker pull hanangh/capstone-project:latest  
+            
+            # Stop any existing container named "myapp-container" if it exists
+            docker stop myapp-container || true  
+            
+            # Remove any existing container with the same name to avoid conflicts
+            docker rm -f myapp-container || true  
+            
+            # Run a new container with the specified name and port mapping
+            docker run -d --name myapp-container -p 8081:80 hanangh/capstone-project:latest  
           EOF
