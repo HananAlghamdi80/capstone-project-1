@@ -33,4 +33,4 @@ jobs:
 
     - name: Deploy Docker container
       run: |
-        ssh -i hananKey root@${{ matrix.server.ip }} 'mkdir -p /capstone-project && cd /capstone-project && docker stop app || true && docker rm app || true && docker pull hanangh/capstone-project:latest && docker run -d --name app -p 8081:80 --env-file .env hanangh/capstone-project:latest'
+        ssh -i hananKey root@${{ matrix.server.ip }} 'mkdir -p /capstone-project && cd /capstone-project && docker stop app || true && docker rm app || true && docker pull hanangh/capstone-project:latest && docker run -d --name app -p 8081:80 hanangh/capstone-project:latest'
