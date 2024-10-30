@@ -16,3 +16,6 @@
 
 ## Continuous Deployment - Matrix Strategy
 <img src="https://github.com/HananAlghamdi80/capstone-project-1/blob/main/Matrix-CD.png" alt="Matrix CD" width="400"/>
+
+## Continuous Deployment in Private Instance
+<img src="https://github.com/HananAlghamdi80/capstone-project-1/blob/main/CD%20in%20private%20instance.png" alt="CD in Private Instance" width="400"/>
