@@ -16,14 +16,14 @@ jobs:
       - name: Set up SSH key for connecting to the servers
         env:
           SSH_PRIVATE_KEY: ${{ secrets.BASTION_SSH_PRIVATE_KEY }}  # Using the private SSH key for the bastion server
-          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_USERNAME: root  # Using 'root' as the SSH username
         run: |
-          # Configure SSH key for access with the correct name "hanankey.pem"
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/hanankey.pem
-          chmod 600 ~/.ssh/hanankey.pem
+          # Configure SSH key for access with the correct name "hananKey"
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/hananKey
+          chmod 600 ~/.ssh/hananKey
 
-          # Connect to the server, pull the Docker image, and run the container
-          ssh -i ~/.ssh/hanankey.pem -o StrictHostKeyChecking=no $SSH_USERNAME@${{ matrix.nodes }} << 'EOF'
+          # Connect to the server through the bastion and deploy the Docker image
+          ssh -i ~/.ssh/hananKey -o StrictHostKeyChecking=no -J root@8.213.17.120 root@${{ matrix.nodes }} << 'EOF'
             echo "Pulling Docker image from Docker Hub and running it on server ${{ matrix.nodes }}"
             docker pull hanangh/capstone-project:latest  # Pull the latest version of the Docker image
             docker stop myapp-container || true  # Stop any existing container with the same name, if it exists
